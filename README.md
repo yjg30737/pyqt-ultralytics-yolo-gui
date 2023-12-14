@@ -25,7 +25,7 @@ YOLO is a model arcitecture that is gaining attention in the real-time object de
 1. git clone ~
 2. pip install -r requirements.txt
 3. python main.py
-4. Copy the path in the input and click run. There are a three files (2 images, 1 video) in sample folder in case of you don't want to be bothered by finding files to test.
+4. Write path in the input and click run. There are a three files (2 images, 1 video) in sample folder in case of you don't want to be bothered by finding files to test.
 
 ## Preview
 ![image](https://github.com/yjg30737/pyqt-ultralytics-yolo-gui/assets/55078043/56d6aaf0-7a36-460d-ba8a-6d78e00560c4)
