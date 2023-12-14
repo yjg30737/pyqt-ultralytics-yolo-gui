@@ -1,0 +1,5 @@
+PyQt5>=5.14
+pillow
+opencv-python
+numpy
+ultralytics
