@@ -3,3 +3,4 @@ pillow
 opencv-python
 numpy
 ultralytics
+torchvision

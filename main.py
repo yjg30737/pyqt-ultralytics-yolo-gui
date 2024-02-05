@@ -12,7 +12,9 @@ project_root = os.path.dirname(os.path.dirname(script_path))
 sys.path.insert(0, project_root)
 sys.path.insert(0, os.getcwd())  # Add the current directory as well
 
-from PyQt5.QtWidgets import QMainWindow, QApplication, QWidget, QVBoxLayout, QPushButton, QLineEdit, QGroupBox, QFormLayout, QComboBox, QCheckBox, QMessageBox
+from PyQt5.QtWidgets import QMainWindow, QApplication, QWidget, QVBoxLayout, QPushButton, QLineEdit, QGroupBox, \
+    QFormLayout, QComboBox, QCheckBox, QMessageBox, QHBoxLayout, QLabel, QTableWidget, QHeaderView, QSplitter, \
+    QTableWidgetItem
 from PyQt5.QtCore import Qt, QCoreApplication
 from PyQt5.QtGui import QFont
 
@@ -26,7 +28,7 @@ QApplication.setFont(QFont('Arial', 12))
 
 class Thread(QThread):
     errorGenerated = pyqtSignal(str)
-    generateFinished = pyqtSignal(str)
+    generateFinished = pyqtSignal(str, dict)
 
     def __init__(self, wrapper: YOLOWrapper, cur_task, path, plot_arg):
         super(Thread, self).__init__()
@@ -38,8 +40,8 @@ class Thread(QThread):
     def run(self):
         try:
             if os.path.exists(self.__path):
-                dst_filename = self.__wrapper.get_result(self.__cur_task, self.__path, self.__plot_arg)
-                self.generateFinished.emit(dst_filename)
+                dst_filename, result_dict = self.__wrapper.get_result(self.__cur_task, self.__path, self.__plot_arg)
+                self.generateFinished.emit(dst_filename, result_dict)
             else:
                 raise Exception(f'The file {self.__path} doesn\'t exists')
         except Exception as e:
@@ -93,10 +95,29 @@ class MainWindow(QMainWindow):
         lay.addWidget(settingsGrpBox)
         lay.setAlignment(Qt.AlignTop)
 
-        mainWidget = QWidget()
-        mainWidget.setLayout(lay)
+        leftWidget = QWidget()
+        leftWidget.setLayout(lay)
 
-        self.setCentralWidget(mainWidget)
+        self.__resultTableWidget = QTableWidget()
+        self.__resultTableWidget.setEditTriggers(QTableWidget.NoEditTriggers)
+
+        lay = QVBoxLayout()
+        lay.addWidget(QLabel('Result'))
+        lay.addWidget(self.__resultTableWidget)
+
+        rightWidget = QWidget()
+        rightWidget.setLayout(lay)
+
+        splitter = QSplitter()
+        splitter.addWidget(leftWidget)
+        splitter.addWidget(rightWidget)
+        splitter.setHandleWidth(1)
+        splitter.setChildrenCollapsible(False)
+        splitter.setSizes([500, 500])
+        splitter.setStyleSheet(
+            "QSplitterHandle {background-color: lightgray;}")
+
+        self.setCentralWidget(splitter)
 
         self.__btn.setEnabled(False)
 
@@ -123,7 +144,6 @@ class MainWindow(QMainWindow):
         self.__t.generateFinished.connect(self.__generatedFinished)
         self.__t.finished.connect(self.__finished)
         self.__t.start()
-        self.__toggleWidget(False)
 
     def __toggleWidget(self, f):
         self.__boxesChkBox.setEnabled(f)
@@ -132,16 +152,27 @@ class MainWindow(QMainWindow):
         self.__btn.setEnabled(f)
 
     def __started(self):
-        print('started')
+        self.__toggleWidget(False)
 
     def __errorGenerated(self, e):
         QMessageBox.critical(self, 'Error', e)
 
-    def __generatedFinished(self, filename):
+    def __initTable(self, result_dict):
+        self.__resultTableWidget.clearContents()
+        self.__resultTableWidget.setRowCount(1)
+        self.__resultTableWidget.setVerticalHeaderLabels(['Count'])
+        self.__resultTableWidget.setColumnCount(len(result_dict))
+        self.__resultTableWidget.setHorizontalHeaderLabels(list(result_dict.keys()))
+        self.__resultTableWidget.setRowCount(1)
+        for i, (k, v) in enumerate(result_dict.items()):
+            self.__resultTableWidget.setItem(0, i, QTableWidgetItem(str(v)))
+
+    def __generatedFinished(self, filename, result_dict):
         open_directory(os.path.dirname(filename))
+        self.__initTable(result_dict)
+
 
     def __finished(self):
-        print('finished')
         self.__toggleWidget(True)
 
 

@@ -1,6 +1,7 @@
 import os, sys
 from pathlib import Path
 import cv2
+from collections import Counter
 
 import numpy as np
 from PIL import Image
@@ -41,6 +42,7 @@ class YOLOWrapper:
         cur_model = self.__model_dict[cur_task]
         if isinstance(cur_model, YOLO):
             try:
+                result_dict = {}
                 ext = Path(src_filename).suffix
                 dst_filename = f'{Path(src_filename).stem}_result{ext}'
                 if ext in ['.jpg', '.png', '.jpeg']:
@@ -50,6 +52,10 @@ class YOLOWrapper:
                         boxes = plot_arg['boxes']
                         labels = plot_arg['labels']
                         conf = plot_arg['conf']
+                        arr = [int(cls.item()) for cls in r.boxes.cls]
+                        arr = Counter(arr)
+                        for k, v in arr.items():
+                            result_dict[r.names[int(k)]] = v
                         im_array = r.plot(boxes=boxes, labels=labels, conf=conf)
                         im = Image.fromarray(im_array[..., ::-1])
                         im.save(dst_filename)
@@ -65,17 +71,28 @@ class YOLOWrapper:
                     fourcc = cv2.VideoWriter_fourcc(*"mp4v")
                     video = cv2.VideoWriter(dst_filename, fourcc, fps, size)
                     results = cur_model.track(src_filename, stream=True)
+
                     for r in results:
                         boxes = plot_arg['boxes']
                         labels = plot_arg['labels']
                         conf = plot_arg['conf']
-
+                        # arr1 = [int(cls.item()) for cls in r.boxes.cls]
+                        # arr2 = [int(id.item()) for id in r.boxes.id]
+                        # arr = {}
+                        # for i, (cls, id) in enumerate(zip(arr1, arr2)):
+                        #     arr[id] = cls
+                        # arr1 = Counter(arr1)
+                        # for k, v in arr1.items():
+                        #     if result_dict.get(r.names[int(k)]):
+                        #         result_dict[r.names[int(k)]] += v
+                        #     else:
+                        #         result_dict[r.names[int(k)]] = v
                         frame_ = r.plot(boxes=boxes, labels=labels, conf=conf)
                         frame_ = Image.fromarray(frame_[..., ::-1])
                         frame_ = np.array(frame_)
                         frame_ = frame_[:, :, ::-1]
                         video.write(frame_)
-                return dst_filename
+                return dst_filename, result_dict
             except Exception as e:
                 raise Exception(e)
         else:
