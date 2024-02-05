@@ -40,11 +40,11 @@ Object Detection over image
 
 Semantic Segmentation over image
 
-## TODO
-* Count every specific object's ID in video  
-
 ![b_result](https://github.com/yjg30737/pyqt-ultralytics-yolo-gui/assets/55078043/035b2fae-e04c-497b-a8cb-f94cee0d4c4b)
 
 Semantic Segmentation over video: https://youtu.be/bdRfcM8MlXI
 
 By default, it shows label and box, probability. I removed them by unchecking all options.
+
+## TODO
+* Count every specific object's ID in video  
