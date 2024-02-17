@@ -6,6 +6,7 @@ from collections import Counter
 import numpy as np
 from PIL import Image
 from ultralytics import YOLO
+from ultralytics.solutions import object_counter
 
 
 def open_directory(path):
@@ -67,6 +68,10 @@ class YOLOWrapper:
                     height = int(vcap.get(cv2.CAP_PROP_FRAME_HEIGHT))
                     size = (width, height)
 
+                    # Init Object Counter
+                    # Define region points
+                    region_points = [(0, 0), (width, 0), (width, height), (0, height)]
+
                     # Save result video
                     fourcc = cv2.VideoWriter_fourcc(*"mp4v")
                     video = cv2.VideoWriter(dst_filename, fourcc, fps, size)
@@ -76,17 +81,9 @@ class YOLOWrapper:
                         boxes = plot_arg['boxes']
                         labels = plot_arg['labels']
                         conf = plot_arg['conf']
-                        # arr1 = [int(cls.item()) for cls in r.boxes.cls]
-                        # arr2 = [int(id.item()) for id in r.boxes.id]
-                        # arr = {}
-                        # for i, (cls, id) in enumerate(zip(arr1, arr2)):
-                        #     arr[id] = cls
-                        # arr1 = Counter(arr1)
-                        # for k, v in arr1.items():
-                        #     if result_dict.get(r.names[int(k)]):
-                        #         result_dict[r.names[int(k)]] += v
-                        #     else:
-                        #         result_dict[r.names[int(k)]] = v
+
+                        # id is not unique, it keeps changing
+
                         frame_ = r.plot(boxes=boxes, labels=labels, conf=conf)
                         frame_ = Image.fromarray(frame_[..., ::-1])
                         frame_ = np.array(frame_)
@@ -94,6 +91,7 @@ class YOLOWrapper:
                         video.write(frame_)
                 return dst_filename, result_dict
             except Exception as e:
+                print(sys.exc_info()[-1].tb_lineno)
                 raise Exception(e)
         else:
             raise Exception('You have to call download_model first.')
