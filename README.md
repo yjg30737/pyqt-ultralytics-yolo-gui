@@ -21,6 +21,8 @@ YOLO is a model arcitecture that is gaining attention in the real-time object de
 * numpy
 * ultralytics
 * torchvision
+* lapx>=0.5.2
+* shapely>=2.0.0
 
 ## How to Run
 1. git clone ~
