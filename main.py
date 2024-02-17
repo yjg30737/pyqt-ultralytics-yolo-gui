@@ -13,7 +13,7 @@ sys.path.insert(0, project_root)
 sys.path.insert(0, os.getcwd())  # Add the current directory as well
 
 from PyQt5.QtWidgets import QMainWindow, QApplication, QWidget, QVBoxLayout, QPushButton, QLineEdit, QGroupBox, \
-    QFormLayout, QComboBox, QCheckBox, QMessageBox, QHBoxLayout, QLabel, QTableWidget, QHeaderView, QSplitter, \
+    QFormLayout, QComboBox, QCheckBox, QMessageBox, QLabel, QTableWidget, QSplitter, \
     QTableWidgetItem
 from PyQt5.QtCore import Qt, QCoreApplication
 from PyQt5.QtGui import QFont
@@ -69,7 +69,7 @@ class MainWindow(QMainWindow):
         self.__pathLineEdit.returnPressed.connect(self.__btn.click)
 
         self.__taskCmbBox = QComboBox()
-        self.__taskCmbBox.addItems(['Object Detection', 'Semantic Segmentation'])
+        self.__taskCmbBox.addItems(['Object Detection', 'Semantic Segmentation', 'Object Tracking'])
 
         self.__boxesChkBox = QCheckBox()
         self.__labelsChkBox = QCheckBox()

@@ -7,6 +7,7 @@ import numpy as np
 from PIL import Image
 from ultralytics import YOLO
 from ultralytics.solutions import object_counter
+from ultralytics.utils.plotting import Annotator, colors
 
 
 def open_directory(path):
@@ -36,7 +37,8 @@ class YOLOWrapper:
         # 0 is object detection, 1 is semantic segmentation
         self.__model_dict = {
             0: self.__model,
-            1: self.__model_seg
+            1: self.__model_seg,
+            2: self.__model_seg
         }
 
     def get_result(self, cur_task, src_filename, plot_arg):
@@ -68,30 +70,66 @@ class YOLOWrapper:
                     height = int(vcap.get(cv2.CAP_PROP_FRAME_HEIGHT))
                     size = (width, height)
 
-                    # Init Object Counter
-                    # Define region points
-                    region_points = [(0, 0), (width, 0), (width, height), (0, height)]
-
                     # Save result video
                     fourcc = cv2.VideoWriter_fourcc(*"mp4v")
                     video = cv2.VideoWriter(dst_filename, fourcc, fps, size)
-                    results = cur_model.track(src_filename, stream=True)
+                    if cur_task == 2:
+                        # results = cur_model.track(src_filename, stream=True)
+                        result_dict = {}
 
-                    for r in results:
-                        boxes = plot_arg['boxes']
-                        labels = plot_arg['labels']
-                        conf = plot_arg['conf']
+                        while True:
+                            ret, im0 = vcap.read()
+                            if not ret:
+                                print("Video frame is empty or video processing has been successfully completed.")
+                                break
 
-                        # id is not unique, it keeps changing
+                            annotator = Annotator(im0, line_width=2)
 
-                        frame_ = r.plot(boxes=boxes, labels=labels, conf=conf)
-                        frame_ = Image.fromarray(frame_[..., ::-1])
-                        frame_ = np.array(frame_)
-                        frame_ = frame_[:, :, ::-1]
-                        video.write(frame_)
+                            results = cur_model.track(im0, persist=True)
+
+                            if results[0].boxes.id is not None and results[0].masks is not None:
+                                masks = results[0].masks.xy
+                                track_ids = results[0].boxes.id.int().cpu().tolist()
+
+                                for mask, track_id in zip(masks, track_ids):
+                                    annotator.seg_bbox(mask=mask,
+                                                       mask_color=colors(track_id, True),
+                                                       track_label=str(track_id))
+
+                            video.write(im0)
+                            # cv2.imshow("instance-segmentation-object-tracking", im0)
+                            #
+                            # if cv2.waitKey(1) & 0xFF == ord('q'):
+                            #     break
+
+                        video.release()
+                        vcap.release()
+                        cv2.destroyAllWindows()
+                    else:
+                        results = cur_model.track(src_filename, stream=True)
+                        for r in results:
+                            boxes = plot_arg['boxes']
+                            labels = plot_arg['labels']
+                            conf = plot_arg['conf']
+
+                            frame_ = r.plot(boxes=boxes, labels=labels, conf=conf)
+                            frame_ = Image.fromarray(frame_[..., ::-1])
+                            frame_ = np.array(frame_)
+                            annotator = Annotator(frame_, line_width=2)
+
+                            if results[0].boxes.id is not None and results[0].masks is not None:
+                                masks = results[0].masks.xy
+                                track_ids = results[0].boxes.id.int().cpu().tolist()
+
+                                for mask, track_id in zip(masks, track_ids):
+                                    annotator.seg_bbox(mask=mask,
+                                                       mask_color=colors(track_id, True),
+                                                       track_label=str(track_id))
+
+                            frame_ = frame_[:, :, ::-1]
+                            video.write(frame_)
                 return dst_filename, result_dict
             except Exception as e:
-                print(sys.exc_info()[-1].tb_lineno)
                 raise Exception(e)
         else:
             raise Exception('You have to call download_model first.')
