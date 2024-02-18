@@ -86,11 +86,29 @@ class YOLOWrapper:
                             annotator = Annotator(im0, line_width=2)
 
                             results = cur_model.track(im0, persist=True)
+                            r = results[0]
 
-                            if results[0].boxes.id is not None and results[0].masks is not None:
-                                masks = results[0].masks.xy
-                                track_ids = results[0].boxes.id.int().cpu().tolist()
+                            if r.boxes.id is not None and r.masks is not None:
+                                masks = r.masks.xy
+                                track_ids = r.boxes.id.int().cpu().tolist()
 
+                                boxes = r.boxes
+                                # Object counter
+                                for b in boxes:
+                                    obj_name = r.names[int(b.cls)]
+                                    obj_id = int(b.id.item())
+                                    print(f'Class name: {r.names[int(b.cls)]}, ID: {int(b.id.item())}')
+                                    if obj_name not in result_dict:
+                                        result_dict[obj_name] = [obj_id]
+                                    else:
+                                        # If it has a different ID, add it.
+                                        if result_dict[obj_name].__contains__(obj_id):
+                                            pass
+                                        else:
+                                            # add ID.
+                                            result_dict[obj_name].append(obj_id)
+
+                                # Draw masks
                                 for mask, track_id in zip(masks, track_ids):
                                     annotator.seg_bbox(mask=mask,
                                                        mask_color=colors(track_id, True),
@@ -105,6 +123,10 @@ class YOLOWrapper:
                         video.release()
                         vcap.release()
                         cv2.destroyAllWindows()
+
+                        # Count the number of objects
+                        for k, v in result_dict.items():
+                            result_dict[k] = len(v)
                     else:
                         results = cur_model.track(src_filename, stream=True)
                         for r in results:
@@ -115,17 +137,6 @@ class YOLOWrapper:
                             frame_ = r.plot(boxes=boxes, labels=labels, conf=conf)
                             frame_ = Image.fromarray(frame_[..., ::-1])
                             frame_ = np.array(frame_)
-                            annotator = Annotator(frame_, line_width=2)
-
-                            if results[0].boxes.id is not None and results[0].masks is not None:
-                                masks = results[0].masks.xy
-                                track_ids = results[0].boxes.id.int().cpu().tolist()
-
-                                for mask, track_id in zip(masks, track_ids):
-                                    annotator.seg_bbox(mask=mask,
-                                                       mask_color=colors(track_id, True),
-                                                       track_label=str(track_id))
-
                             frame_ = frame_[:, :, ::-1]
                             video.write(frame_)
                 return dst_filename, result_dict
