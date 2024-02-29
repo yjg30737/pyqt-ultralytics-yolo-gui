@@ -15,7 +15,9 @@ This program has a simple customization option, so you can display or remove obj
 YOLO is a model arcitecture that is gaining attention in the real-time object detection and image segmentation fields due to its fast speed. YOLOv8 is one of the most recent version of it.
 
 ## Requirements
-* PyQt5>=5.14
+* qtpy
+* PyQt6
+* PySide6
 * pillow
 * opencv-python
 * numpy
