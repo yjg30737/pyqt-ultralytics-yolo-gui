@@ -1,4 +1,6 @@
-PyQt5>=5.14
+PyQt6
+PySide6
+qtpy
 pillow
 opencv-python
 numpy

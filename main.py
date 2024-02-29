@@ -12,13 +12,23 @@ project_root = os.path.dirname(os.path.dirname(script_path))
 sys.path.insert(0, project_root)
 sys.path.insert(0, os.getcwd())  # Add the current directory as well
 
-from PyQt5.QtWidgets import QMainWindow, QApplication, QWidget, QVBoxLayout, QPushButton, QLineEdit, QGroupBox, \
+from qtpy.QtWidgets import QMainWindow, QApplication, QWidget, QVBoxLayout, QPushButton, QLineEdit, QGroupBox, \
     QFormLayout, QComboBox, QCheckBox, QMessageBox, QLabel, QTableWidget, QSplitter, \
     QTableWidgetItem
-from PyQt5.QtCore import Qt, QCoreApplication
-from PyQt5.QtGui import QFont
+from qtpy.QtCore import Qt, QCoreApplication
+from qtpy.QtGui import QFont
 
-from PyQt5.QtCore import QThread, pyqtSignal
+from qtpy.QtCore import QThread, Signal
+
+# print(os.environ['QT_API'])
+
+# for testing pyside6
+# os.environ['QT_API'] = 'pyside6'
+
+# for testing pyqt6
+os.environ['QT_API'] = 'pyqt6'
+
+print(os.environ['QT_API'])
 
 QApplication.setAttribute(Qt.AA_EnableHighDpiScaling)
 QCoreApplication.setAttribute(Qt.AA_UseHighDpiPixmaps)  # HighDPI support
@@ -27,8 +37,8 @@ QApplication.setFont(QFont('Arial', 12))
 
 
 class Thread(QThread):
-    errorGenerated = pyqtSignal(str)
-    generateFinished = pyqtSignal(str, dict)
+    errorGenerated = Signal(str)
+    generateFinished = Signal(str, dict)
 
     def __init__(self, wrapper: YOLOWrapper, cur_task, path, plot_arg):
         super(Thread, self).__init__()
